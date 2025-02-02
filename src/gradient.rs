@@ -35,11 +35,6 @@ impl Gradient {
         }
     }
 
-    pub fn set_steps(&mut self, steps: NonZeroU8) {
-        self.step = calculate_step(self.start, self.end, steps);
-        self.i = 0;
-    }
-
     pub fn peek_color(&self) -> u32 {
         let color = (
             self.start.0 as f32 + self.step.0 * self.i as f32,
@@ -52,7 +47,7 @@ impl Gradient {
             color.2.round() as u8,
         );
 
-        (color.0 as u32) << 16 | (color.1 as u32) << 8 | color.2 as u32
+        ((color.0 as u32) << 16) | ((color.1 as u32) << 8) | color.2 as u32
     }
 
     pub fn next_color(&mut self) -> u32 {
@@ -74,6 +69,6 @@ impl Gradient {
             self.i += 1;
         }
 
-        (color.0 as u32) << 16 | (color.1 as u32) << 8 | color.2 as u32
+        ((color.0 as u32) << 16) | ((color.1 as u32) << 8) | color.2 as u32
     }
 }

@@ -1,16 +1,14 @@
 use std::{
     num::NonZeroUsize,
-    sync::{atomic::AtomicPtr, mpsc::Receiver, LazyLock, Mutex},
+    sync::{mpsc::Receiver, LazyLock, Mutex},
     time::{Duration, Instant},
 };
 
 use sdl2::render::Texture;
 
 use crate::{
-    changelist::{self, Changelist},
-    gradient::Gradient,
-    grid::Grid,
-    DEFAULT_GRID, DEFAULT_RADIUS, RADII, SIZES,
+    changelist::Changelist, gradient::Gradient, grid::Grid, DEFAULT_GRID, DEFAULT_RADIUS, RADII,
+    SIZES,
 };
 
 static WRITEBACK_GRID: LazyLock<Mutex<Grid>> = LazyLock::new(|| {

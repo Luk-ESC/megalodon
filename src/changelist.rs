@@ -66,7 +66,7 @@ impl Changelist {
             "encoding doesn't support this large of a grid"
         );
         self.changes
-            .push((MOVE_TAG << 28) | (pos as u32) << 2 | direction as u32);
+            .push((MOVE_TAG << 28) | ((pos as u32) << 2) | direction as u32);
     }
 
     pub fn spawn(&mut self, pos: usize, color: u32) {
@@ -130,10 +130,7 @@ impl Iterator for ChangelistIter<'_> {
                     1 => Direction::DownLeft,
                     2 => Direction::DownRight,
                     d => {
-                        #[cfg(debug_assertions)]
                         panic!("invalid direction: {d:b}");
-                        #[cfg(not(debug_assertions))]
-                        Direction::Down
                     }
                 };
                 Some(Change::Move(pos as usize, direction))
@@ -149,10 +146,7 @@ impl Iterator for ChangelistIter<'_> {
                 })
             }
             t => {
-                #[cfg(debug_assertions)]
                 panic!("unknown change tag: {t:b}");
-                #[cfg(not(debug_assertions))]
-                None
             }
         }
     }
