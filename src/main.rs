@@ -1,10 +1,7 @@
-use std::{
-    num::{NonZeroU8, NonZeroUsize},
-    time::Instant,
-};
+use std::{num::NonZeroUsize, time::Instant};
 
 use double::{update_thread, Event};
-use gradient::Gradient;
+use gradient::{Gradient, Steps};
 use rand::thread_rng;
 use sdl2::{
     event::{Event as SdlEvent, WindowEvent},
@@ -50,7 +47,7 @@ fn main() {
 
     let mut canvas = window.into_canvas().present_vsync().build().unwrap();
 
-    let steps = NonZeroU8::new(200).unwrap();
+    let steps = Steps::new(300).unwrap();
     let mut gradient = Gradient::new(&mut thread_rng(), steps);
 
     let (sender, recv) = std::sync::mpsc::channel();

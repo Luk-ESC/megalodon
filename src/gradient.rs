@@ -1,6 +1,8 @@
-use std::num::NonZeroU8;
+use std::num::NonZeroU16;
 
 use rand::Rng;
+
+pub type Steps = NonZeroU16;
 #[derive(Clone)]
 pub(crate) struct Gradient {
     start: (u8, u8, u8),
@@ -9,7 +11,7 @@ pub(crate) struct Gradient {
     step: (f32, f32, f32),
 }
 
-fn calculate_step(start: (u8, u8, u8), end: (u8, u8, u8), steps: NonZeroU8) -> (f32, f32, f32) {
+fn calculate_step(start: (u8, u8, u8), end: (u8, u8, u8), steps: Steps) -> (f32, f32, f32) {
     (
         ((end.0 - start.0) as f32 / steps.get() as f32),
         ((end.1 - start.1) as f32 / steps.get() as f32),
@@ -18,7 +20,7 @@ fn calculate_step(start: (u8, u8, u8), end: (u8, u8, u8), steps: NonZeroU8) -> (
 }
 
 impl Gradient {
-    pub fn new(rng: &mut impl Rng, steps: NonZeroU8) -> Self {
+    pub fn new(rng: &mut impl Rng, steps: Steps) -> Self {
         let n1: (u8, u8, u8) = rng.gen();
         let n2: (u8, u8, u8) = rng.gen();
 
