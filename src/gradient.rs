@@ -21,8 +21,8 @@ fn calculate_step(start: (u8, u8, u8), end: (u8, u8, u8), steps: Steps) -> (f32,
 
 impl Gradient {
     pub fn new(rng: &mut impl Rng, steps: Steps) -> Self {
-        let n1: (u8, u8, u8) = rng.gen();
-        let n2: (u8, u8, u8) = rng.gen();
+        let n1: (u8, u8, u8) = rng.random();
+        let n2: (u8, u8, u8) = rng.random();
 
         let start = (n1.0.min(n2.0), n1.1.min(n2.1), n1.2.min(n2.2));
 

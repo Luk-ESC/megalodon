@@ -2,7 +2,7 @@ use std::{num::NonZeroUsize, time::Instant};
 
 use double::{update_thread, Event};
 use gradient::{Gradient, Steps};
-use rand::thread_rng;
+use rand::rng;
 use sdl2::{
     event::{Event as SdlEvent, WindowEvent},
     keyboard::Keycode,
@@ -48,7 +48,7 @@ fn main() {
     let mut canvas = window.into_canvas().present_vsync().build().unwrap();
 
     let steps = Steps::new(300).unwrap();
-    let mut gradient = Gradient::new(&mut thread_rng(), steps);
+    let mut gradient = Gradient::new(&mut rng(), steps);
 
     let (sender, recv) = std::sync::mpsc::channel();
     std::thread::spawn(move || update_thread(recv));
@@ -81,7 +81,7 @@ fn main() {
                     keycode: Some(Keycode::R),
                     ..
                 } => {
-                    gradient = Gradient::new(&mut thread_rng(), steps);
+                    gradient = Gradient::new(&mut rng(), steps);
                 }
                 SdlEvent::KeyUp {
                     keycode: Some(Keycode::C),
