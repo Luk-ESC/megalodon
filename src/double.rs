@@ -4,17 +4,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-use sdl2::render::Texture;
-
-use crate::{
-    changelist::Changelist, gradient::Gradient, grid::Grid, DEFAULT_GRID, DEFAULT_RADIUS, RADII,
-    SIZES,
-};
+use crate::{changelist::Changelist, gradient::Gradient, grid::Grid, DEFAULT_RADIUS, RADII};
 
 static WRITEBACK_GRID: LazyLock<Mutex<Grid>> = LazyLock::new(|| {
     Mutex::new(Grid::new(
-        NonZeroUsize::new(SIZES[DEFAULT_GRID].0).unwrap(),
-        NonZeroUsize::new(SIZES[DEFAULT_GRID].1).unwrap(),
+        NonZeroUsize::new(1).unwrap(),
+        NonZeroUsize::new(1).unwrap(),
         RADII[DEFAULT_RADIUS],
     ))
 });
@@ -86,7 +81,7 @@ pub fn update_thread(recv: Receiver<Event>) {
 }
 
 pub fn render_to(
-    texture: &mut Texture,
+    buffer: &mut [u32],
     mouse_in_window: bool,
     gradient: &Gradient,
     mouse_position: (i32, i32),
@@ -94,5 +89,5 @@ pub fn render_to(
     WRITEBACK_GRID
         .lock()
         .unwrap()
-        .render_to(texture, mouse_in_window, gradient, mouse_position)
+        .render_to(buffer, mouse_in_window, gradient, mouse_position)
 }

@@ -1,7 +1,5 @@
 use std::num::NonZeroUsize;
 
-use sdl2::render::Texture;
-
 use crate::{
     changelist::{Change, Changelist, Direction},
     gradient::Gradient,
@@ -170,42 +168,37 @@ impl Grid {
 
     pub fn render_to(
         &self,
-        texture: &mut Texture,
+        buffer: &mut [u32],
         mouse_in_window: bool,
         gradient: &Gradient,
         mouse_position: (i32, i32),
     ) {
-        texture
-            .with_lock(None, |buffer, _| {
-                if buffer.len() != self.colors.len() * 4 {
-                    eprintln!("buffer length mismatch");
-                    return;
-                }
+        if buffer.len() != self.colors.len() {
+            eprintln!("buffer length mismatch");
+            return;
+        }
 
-                let colors = bytemuck::cast_slice(&self.colors);
-                buffer.copy_from_slice(colors);
+        let colors = bytemuck::cast_slice(&self.colors);
+        buffer.copy_from_slice(colors);
 
-                if mouse_in_window {
-                    let color = gradient.peek_color();
-                    for (dx, dy) in circle_offsets(self.radius) {
-                        let x = mouse_position.0 as isize + dx;
-                        let y = mouse_position.1 as isize + dy;
+        if mouse_in_window {
+            let color = gradient.peek_color();
+            for (dx, dy) in circle_offsets(self.radius) {
+                let x = mouse_position.0 as isize + dx;
+                let y = mouse_position.1 as isize + dy;
 
-                        if x >= 0
-                            && x < self.width.get() as isize
-                            && y >= 0
-                            && y < self.height.get() as isize
-                        {
-                            let i = (y * self.width.get() as isize + x) as usize;
-                            if self.is_empty(i) {
-                                let i = i * 4;
-                                buffer[i..i + 4].copy_from_slice(&color.to_le_bytes());
-                            }
-                        }
+                if x >= 0
+                    && x < self.width.get() as isize
+                    && y >= 0
+                    && y < self.height.get() as isize
+                {
+                    let i = (y * self.width.get() as isize + x) as usize;
+                    if self.is_empty(i) {
+                        buffer[i] = color;
                     }
                 }
-            })
-            .unwrap();
+            }
+        }
     }
 
     pub(crate) fn spawn(
