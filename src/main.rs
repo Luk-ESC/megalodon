@@ -5,16 +5,15 @@ use fastrand::Rng;
 use gradient::{Gradient, Steps};
 use grid::EMPTY;
 use minifb::{Key, KeyRepeat, MouseButton, Window};
+use radii::RadiusId;
 
 mod double;
 mod gradient;
 mod grid;
+mod radii;
 mod resize;
 
-static RADII: &[f64] = &[1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0];
-
 static DEFAULT_ZOOM: usize = 3;
-static DEFAULT_RADIUS: usize = 2;
 
 fn main() {
     let mut window = Window::new(
@@ -42,7 +41,7 @@ fn main() {
     let mut mouse_position;
     let mut mouse_in_window;
     let mut mouse_clicked;
-    let mut radius = DEFAULT_RADIUS;
+    let mut radius = RadiusId::default();
     let mut last_output_size = (800, 600);
 
     let mut pixel_buffer = vec![0u32; 800 * 600];
@@ -66,14 +65,14 @@ fn main() {
             zoom -= 1;
         }
 
-        if window.is_key_pressed(Key::W, KeyRepeat::No) && radius < RADII.len() - 1 {
-            radius += 1;
-            sender.send(Event::Radius(RADII[radius])).unwrap();
+        if window.is_key_pressed(Key::W, KeyRepeat::No) {
+            radius.next_bigger();
+            sender.send(Event::Radius(radius)).unwrap();
         }
 
-        if window.is_key_pressed(Key::S, KeyRepeat::No) && radius > 0 {
-            radius -= 1;
-            sender.send(Event::Radius(RADII[radius])).unwrap();
+        if window.is_key_pressed(Key::S, KeyRepeat::No) {
+            radius.next_smaller();
+            sender.send(Event::Radius(radius)).unwrap();
         }
 
         let new_pos = window.get_mouse_pos(minifb::MouseMode::Clamp).unwrap();
@@ -119,7 +118,7 @@ fn main() {
             mouse_position,
             NonZeroUsize::new(output_size.0 as usize).unwrap(),
             NonZeroUsize::new(output_size.1 as usize).unwrap(),
-            RADII[radius],
+            radius.get(),
         );
 
         window

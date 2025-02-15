@@ -7,14 +7,14 @@ use std::{
 use crate::{
     gradient::Gradient,
     grid::{circle_offsets, Grid, EMPTY},
-    DEFAULT_RADIUS, RADII,
+    radii::RadiusId,
 };
 
 pub enum Event {
     Clear,
     Resize(NonZeroUsize, NonZeroUsize),
     Spawn(u32, (i32, i32)),
-    Radius(f64),
+    Radius(RadiusId),
 }
 
 static PIXELS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
@@ -24,7 +24,7 @@ pub fn update_thread(recv: Receiver<Event>) {
     let mut grid = Grid::new(
         NonZeroUsize::new(800).unwrap(),
         NonZeroUsize::new(600).unwrap(),
-        RADII[DEFAULT_RADIUS],
+        RadiusId::default().get(),
     );
     {
         PIXELS.lock().unwrap().clone_from(&grid.colors);
@@ -48,7 +48,7 @@ pub fn update_thread(recv: Receiver<Event>) {
                     needs_update |= grid.spawn(pos, color);
                 }
                 Event::Radius(r) => {
-                    grid.set_radius(r);
+                    grid.set_radius(r.get());
                 }
             }
         }
