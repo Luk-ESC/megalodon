@@ -1,6 +1,6 @@
 use fastrand::Rng;
 
-use crate::resize;
+use crate::{radii::RadiusId, resize, DEFAULT_HEIGHT, DEFAULT_WIDTH};
 
 pub fn circle_offsets(radius: f64) -> impl Iterator<Item = (isize, isize)> {
     let radius_ceil = radius.ceil() as isize;
@@ -27,23 +27,20 @@ pub struct Grid {
 pub const EMPTY: u32 = 0xFFE0FFFE;
 
 impl Grid {
-    pub fn new(width: u16, height: u16, radius: f64) -> Self {
-        assert!(radius > 0.0);
+    pub fn new() -> Self {
         Self {
-            width,
-            height,
-            radius,
-            colors: vec![EMPTY; width as usize * height as usize],
+            width: DEFAULT_WIDTH as u16,
+            height: DEFAULT_HEIGHT as u16,
+            radius: RadiusId::default().get(),
+            colors: vec![EMPTY; DEFAULT_WIDTH * DEFAULT_HEIGHT],
             rng: Rng::new(),
         }
     }
 
     pub fn update(&mut self) -> bool {
-        let mut row = self.height - 2;
-
         let mut updated = false;
 
-        loop {
+        for row in (0..=self.height - 2).rev() {
             let direction = if self.rng.bool() { 1i16 } else { -1 };
 
             let mut column = if direction > 0 { 0 } else { self.width - 1 };
@@ -64,12 +61,6 @@ impl Grid {
 
                 column += direction as u16;
             }
-
-            if row == 0 {
-                break;
-            }
-
-            row -= 1;
         }
 
         updated

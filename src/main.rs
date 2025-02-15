@@ -1,7 +1,6 @@
 use double::{update_thread, Event};
 use fastrand::Rng;
 use gradient::{Gradient, Steps};
-use grid::EMPTY;
 use minifb::{Key, KeyRepeat, MouseButton, Window};
 use radii::RadiusId;
 
@@ -11,13 +10,14 @@ mod grid;
 mod radii;
 mod resize;
 
-static DEFAULT_ZOOM: usize = 3;
+static DEFAULT_WIDTH: usize = 800;
+static DEFAULT_HEIGHT: usize = 600;
 
 fn main() {
     let mut window = Window::new(
         "megalodon",
-        800,
-        600,
+        DEFAULT_WIDTH,
+        DEFAULT_HEIGHT,
         minifb::WindowOptions {
             resize: true,
             ..Default::default()
@@ -34,15 +34,15 @@ fn main() {
     let (sender, recv) = std::sync::mpsc::channel();
     std::thread::spawn(move || update_thread(recv));
 
-    let mut zoom = DEFAULT_ZOOM;
+    let mut zoom = 3;
 
     let mut mouse_position;
     let mut mouse_in_window;
     let mut mouse_clicked;
     let mut radius = RadiusId::default();
-    let mut last_output_size = (800, 600);
+    let mut last_output_size = (DEFAULT_WIDTH as u16, DEFAULT_HEIGHT as u16);
 
-    let mut pixel_buffer = vec![0u32; 800 * 600];
+    let mut pixel_buffer = vec![0u32; DEFAULT_WIDTH * DEFAULT_HEIGHT];
     let mut temporaries = vec![];
 
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
@@ -51,7 +51,6 @@ fn main() {
         }
 
         if window.is_key_pressed(Key::C, KeyRepeat::No) {
-            pixel_buffer.fill(EMPTY);
             sender.send(Event::Clear).unwrap();
         }
 

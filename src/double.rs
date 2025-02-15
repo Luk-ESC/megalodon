@@ -20,7 +20,7 @@ static PIXELS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
 
 pub fn update_thread(recv: Receiver<Event>) {
     let sleep_time = Duration::from_secs(1) / 120;
-    let mut grid = Grid::new(800, 600, RadiusId::default().get());
+    let mut grid = Grid::new();
     {
         PIXELS.lock().unwrap().clone_from(&grid.colors);
     }
