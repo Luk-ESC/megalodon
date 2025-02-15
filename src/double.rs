@@ -37,7 +37,6 @@ pub fn update_thread(recv: Receiver<Event>) {
             match event {
                 Event::Clear => grid.clear(&mut changes),
                 Event::Resize(width, height) => {
-                    // TODO: ideally not
                     needs_update = true;
                     grid.resize(width, height, &mut changes);
                 }
@@ -69,9 +68,6 @@ pub fn update_thread(recv: Receiver<Event>) {
 
         if elapsed < sleep_time {
             std::thread::sleep(sleep_time - elapsed);
-            if i % 20 == 0 && (updated) {
-                println!("update took {elapsed:?}");
-            }
         } else if i % 10 == 0 {
             println!("update took too long: {:?}", elapsed);
         }

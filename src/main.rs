@@ -1,4 +1,4 @@
-use std::{num::NonZeroUsize, time::Instant};
+use std::num::NonZeroUsize;
 
 use double::{update_thread, Event};
 use fastrand::Rng;
@@ -48,10 +48,7 @@ fn main() {
 
     let mut pixel_buffer = vec![0u32; 800 * 600];
 
-    let mut i = 0;
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
-        let start = Instant::now();
-
         if window.is_key_pressed(Key::R, KeyRepeat::No) {
             gradient = Gradient::new(&mut rng, steps);
         }
@@ -63,7 +60,6 @@ fn main() {
 
         if window.is_key_pressed(Key::Up, KeyRepeat::No) {
             zoom += 1;
-            println!("{zoom}");
         }
 
         if window.is_key_pressed(Key::Down, KeyRepeat::No) && zoom > 1 {
@@ -120,18 +116,8 @@ fn main() {
             mouse_position,
         );
 
-        let elapsed = start.elapsed();
-
         window
             .update_with_buffer(&pixel_buffer, output_size.0 as _, output_size.1 as _)
             .unwrap();
-
-        if i % 120 == 0 {
-            println!(
-                "Frametime: {elapsed:#?} ({} FPS)",
-                (1.0 / elapsed.as_secs_f64()).round()
-            );
-        }
-        i += 1;
     }
 }
