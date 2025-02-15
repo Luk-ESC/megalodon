@@ -1,10 +1,10 @@
 use std::{num::NonZeroUsize, time::Instant};
 
 use double::{update_thread, Event};
+use fastrand::Rng;
 use gradient::{Gradient, Steps};
 use grid::EMPTY;
 use minifb::{Key, KeyRepeat, MouseButton, Window};
-use rand::rng;
 
 mod changelist;
 mod double;
@@ -31,7 +31,8 @@ fn main() {
     window.set_target_fps(120);
 
     let steps = Steps::new(300).unwrap();
-    let mut gradient = Gradient::new(&mut rng(), steps);
+    let mut rng = Rng::new();
+    let mut gradient = Gradient::new(&mut rng, steps);
 
     let (sender, recv) = std::sync::mpsc::channel();
     std::thread::spawn(move || update_thread(recv));
@@ -51,7 +52,7 @@ fn main() {
         let start = Instant::now();
 
         if window.is_key_pressed(Key::R, KeyRepeat::No) {
-            gradient = Gradient::new(&mut rng(), steps);
+            gradient = Gradient::new(&mut rng, steps);
         }
 
         if window.is_key_pressed(Key::C, KeyRepeat::No) {

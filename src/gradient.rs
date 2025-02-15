@@ -1,6 +1,6 @@
 use std::num::NonZeroU16;
 
-use rand::Rng;
+use fastrand::Rng;
 
 pub type Steps = NonZeroU16;
 #[derive(Clone)]
@@ -20,9 +20,9 @@ fn calculate_step(start: (u8, u8, u8), end: (u8, u8, u8), steps: Steps) -> (f32,
 }
 
 impl Gradient {
-    pub fn new(rng: &mut impl Rng, steps: Steps) -> Self {
-        let n1: (u8, u8, u8) = rng.random();
-        let n2: (u8, u8, u8) = rng.random();
+    pub fn new(rng: &mut Rng, steps: Steps) -> Self {
+        let n1: (u8, u8, u8) = (rng.u8(..), rng.u8(..), rng.u8(..));
+        let n2: (u8, u8, u8) = (rng.u8(..), rng.u8(..), rng.u8(..));
 
         let start = (n1.0.min(n2.0), n1.1.min(n2.1), n1.2.min(n2.2));
 

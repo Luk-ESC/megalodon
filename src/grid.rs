@@ -1,5 +1,7 @@
 use std::num::NonZeroUsize;
 
+use fastrand::Rng;
+
 use crate::{
     changelist::{Change, Changelist, Direction},
     gradient::Gradient,
@@ -25,6 +27,7 @@ pub struct Grid {
     radius: f64,
     colors: Box<[u32]>,
     row_counts: Box<[usize]>,
+    rng: Rng,
 }
 
 pub const EMPTY: u32 = 0xFFE0FFFE;
@@ -38,6 +41,7 @@ impl Grid {
             radius,
             colors: vec![EMPTY; width.get() * height.get()].into_boxed_slice(),
             row_counts: vec![0; height.get()].into_boxed_slice(),
+            rng: Rng::new(),
         }
     }
 
@@ -56,7 +60,7 @@ impl Grid {
         let mut updated = false;
 
         loop {
-            let direction = if rand::random() { 1 } else { -1 };
+            let direction = if self.rng.bool() { 1 } else { -1 };
 
             let mut column = if direction > 0 {
                 0
