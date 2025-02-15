@@ -64,7 +64,7 @@ impl Grid {
                 let i = row * self.width.get() + column as usize;
 
                 if !self.is_empty(i) {
-                    let moved_down = self.update_pixel(i);
+                    let moved_down = self.update_pixel(i, column);
                     updated |= moved_down;
                 }
 
@@ -85,21 +85,19 @@ impl Grid {
         updated
     }
 
-    fn update_pixel(&mut self, i: usize) -> bool {
+    fn update_pixel(&mut self, i: usize, column: i64) -> bool {
         let below = i + self.width.get();
         let below_left = below - 1;
         let below_right = below + 1;
-
-        let below_row = below / self.width.get();
 
         // If there are no pixels below, move it down.
         if self.is_empty(below) {
             self.move_(i, below);
             return true;
-        } else if below_left / self.width.get() == below_row && self.is_empty(below_left) {
+        } else if column != 0 && self.is_empty(below_left) {
             self.move_(i, below_left);
             return true;
-        } else if below_right / self.width.get() == below_row && self.is_empty(below_right) {
+        } else if column != (self.width.get() - 1) as i64 && self.is_empty(below_right) {
             self.move_(i, below_right);
             return true;
         }
@@ -110,9 +108,7 @@ impl Grid {
         self.colors.fill(EMPTY);
     }
 
-    pub fn move_(&mut self, a: usize, b: usize) {
-        assert!(!self.is_empty(a));
-
+    fn move_(&mut self, a: usize, b: usize) {
         self.colors[b] = self.colors[a];
         self.colors[a] = EMPTY;
     }
