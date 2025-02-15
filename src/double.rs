@@ -1,5 +1,9 @@
 use std::{
-    sync::{mpsc::Receiver, Mutex},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc::Receiver,
+        Mutex,
+    },
     time::{Duration, Instant},
 };
 
@@ -16,6 +20,7 @@ pub enum Event {
     Radius(RadiusId),
 }
 
+static CHANGED: AtomicBool = AtomicBool::new(false);
 static PIXELS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
 
 pub fn update_thread(recv: Receiver<Event>) {
@@ -23,6 +28,7 @@ pub fn update_thread(recv: Receiver<Event>) {
     let mut grid = Grid::new();
     {
         PIXELS.lock().unwrap().clone_from(&grid.colors);
+        CHANGED.store(true, Ordering::Relaxed);
     }
 
     let mut i = 0;
@@ -58,6 +64,7 @@ pub fn update_thread(recv: Receiver<Event>) {
             {
                 PIXELS.lock().unwrap().clone_from(&grid.colors);
             }
+            CHANGED.store(true, Ordering::Relaxed);
         }
 
         let elapsed = start.elapsed();
@@ -87,16 +94,12 @@ pub fn render_to(
         buffer[i] = EMPTY;
     }
 
-    let mut lock = PIXELS.lock().unwrap();
-    let colors = std::mem::take(&mut *lock);
-    drop(lock);
-
-    if !colors.is_empty() {
-        if buffer.len() != colors.len() {
-            return;
+    if CHANGED.swap(false, Ordering::Relaxed) {
+        let mut lock = PIXELS.lock().unwrap();
+        if lock.len() == buffer.len() {
+            std::mem::swap(buffer, &mut *lock);
         }
-
-        *buffer = colors;
+        drop(lock);
     }
 
     if mouse_in_window {
