@@ -1,5 +1,3 @@
-use std::num::NonZeroUsize;
-
 use double::{update_thread, Event};
 use fastrand::Rng;
 use gradient::{Gradient, Steps};
@@ -77,15 +75,15 @@ fn main() {
 
         let new_pos = window.get_mouse_pos(minifb::MouseMode::Clamp).unwrap();
         mouse_position = (
-            (new_pos.0 / zoom as f32) as i32,
-            (new_pos.1 / zoom as f32) as i32,
+            (new_pos.0 / zoom as f32) as u16,
+            (new_pos.1 / zoom as f32) as u16,
         );
         mouse_in_window = window.get_mouse_pos(minifb::MouseMode::Discard).is_some();
 
         mouse_clicked = window.get_mouse_down(MouseButton::Left);
 
         let output_size = window.get_size();
-        let output_size = ((output_size.0 / zoom) as u32, (output_size.1 / zoom) as u32);
+        let output_size = ((output_size.0 / zoom) as u16, (output_size.1 / zoom) as u16);
 
         if mouse_clicked {
             let color = gradient.next_color();
@@ -94,10 +92,7 @@ fn main() {
 
         if output_size != last_output_size {
             sender
-                .send(Event::Resize(
-                    NonZeroUsize::new(output_size.0 as _).unwrap(),
-                    NonZeroUsize::new(output_size.1 as _).unwrap(),
-                ))
+                .send(Event::Resize(output_size.0, output_size.1))
                 .unwrap();
 
             resize::smart_resize(
@@ -116,8 +111,8 @@ fn main() {
             mouse_in_window,
             &gradient,
             mouse_position,
-            NonZeroUsize::new(output_size.0 as usize).unwrap(),
-            NonZeroUsize::new(output_size.1 as usize).unwrap(),
+            output_size.0,
+            output_size.1,
             radius.get(),
         );
 

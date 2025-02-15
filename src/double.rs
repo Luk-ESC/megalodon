@@ -1,5 +1,4 @@
 use std::{
-    num::NonZeroUsize,
     sync::{mpsc::Receiver, Mutex},
     time::{Duration, Instant},
 };
@@ -12,8 +11,8 @@ use crate::{
 
 pub enum Event {
     Clear,
-    Resize(NonZeroUsize, NonZeroUsize),
-    Spawn(u32, (i32, i32)),
+    Resize(u16, u16),
+    Spawn(u32, (u16, u16)),
     Radius(RadiusId),
 }
 
@@ -21,11 +20,7 @@ static PIXELS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
 
 pub fn update_thread(recv: Receiver<Event>) {
     let sleep_time = Duration::from_secs(1) / 120;
-    let mut grid = Grid::new(
-        NonZeroUsize::new(800).unwrap(),
-        NonZeroUsize::new(600).unwrap(),
-        RadiusId::default().get(),
-    );
+    let mut grid = Grid::new(800, 600, RadiusId::default().get());
     {
         PIXELS.lock().unwrap().clone_from(&grid.colors);
     }
@@ -83,9 +78,9 @@ pub fn render_to(
     temporaries: &mut Vec<usize>,
     mouse_in_window: bool,
     gradient: &Gradient,
-    mouse_position: (i32, i32),
-    width: NonZeroUsize,
-    height: NonZeroUsize,
+    mouse_position: (u16, u16),
+    width: u16,
+    height: u16,
     radius: f64,
 ) {
     for i in temporaries.drain(..) {
@@ -110,8 +105,8 @@ pub fn render_to(
             let x = mouse_position.0 as isize + dx;
             let y = mouse_position.1 as isize + dy;
 
-            if x >= 0 && x < width.get() as isize && y >= 0 && y < height.get() as isize {
-                let i = (y * width.get() as isize + x) as usize;
+            if x >= 0 && x < width as isize && y >= 0 && y < height as isize {
+                let i = (y * width as isize + x) as usize;
                 if buffer[i] == EMPTY {
                     temporaries.push(i);
                     buffer[i] = color;
