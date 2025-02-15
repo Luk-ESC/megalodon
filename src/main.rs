@@ -6,7 +6,6 @@ use gradient::{Gradient, Steps};
 use grid::EMPTY;
 use minifb::{Key, KeyRepeat, MouseButton, Window};
 
-mod changelist;
 mod double;
 mod gradient;
 mod grid;
@@ -114,6 +113,9 @@ fn main() {
             mouse_in_window,
             &gradient,
             mouse_position,
+            NonZeroUsize::new(output_size.0 as usize).unwrap(),
+            NonZeroUsize::new(output_size.1 as usize).unwrap(),
+            RADII[radius],
         );
 
         window

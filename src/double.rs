@@ -1,18 +1,14 @@
 use std::{
     num::NonZeroUsize,
-    sync::{mpsc::Receiver, LazyLock, Mutex},
+    sync::{mpsc::Receiver, Mutex},
     time::{Duration, Instant},
 };
 
-use crate::{changelist::Changelist, gradient::Gradient, grid::Grid, DEFAULT_RADIUS, RADII};
-
-static WRITEBACK_GRID: LazyLock<Mutex<Grid>> = LazyLock::new(|| {
-    Mutex::new(Grid::new(
-        NonZeroUsize::new(800).unwrap(),
-        NonZeroUsize::new(600).unwrap(),
-        RADII[DEFAULT_RADIUS],
-    ))
-});
+use crate::{
+    gradient::Gradient,
+    grid::{circle_offsets, Grid, EMPTY},
+    DEFAULT_RADIUS, RADII,
+};
 
 pub enum Event {
     Clear,
@@ -21,10 +17,18 @@ pub enum Event {
     Radius(f64),
 }
 
+static PIXELS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
+
 pub fn update_thread(recv: Receiver<Event>) {
     let sleep_time = Duration::from_secs(1) / 120;
-    let mut grid = WRITEBACK_GRID.lock().unwrap().clone();
-    let mut changes = Changelist::new();
+    let mut grid = Grid::new(
+        NonZeroUsize::new(800).unwrap(),
+        NonZeroUsize::new(600).unwrap(),
+        RADII[DEFAULT_RADIUS],
+    );
+    {
+        PIXELS.lock().unwrap().clone_from(&grid.colors);
+    }
 
     let mut i = 0;
     let mut needs_update = false;
@@ -35,13 +39,13 @@ pub fn update_thread(recv: Receiver<Event>) {
         while let Ok(event) = recv.try_recv() {
             any_event = true;
             match event {
-                Event::Clear => grid.clear(&mut changes),
+                Event::Clear => grid.clear(),
                 Event::Resize(width, height) => {
                     needs_update = true;
-                    grid.resize(width, height, &mut changes);
+                    grid.resize(width, height);
                 }
                 Event::Spawn(color, pos) => {
-                    needs_update |= grid.spawn(pos, color, &mut changes);
+                    needs_update |= grid.spawn(pos, color);
                 }
                 Event::Radius(r) => {
                     grid.set_radius(r);
@@ -51,17 +55,14 @@ pub fn update_thread(recv: Receiver<Event>) {
 
         let mut updated = false;
         if needs_update {
-            needs_update = grid.update(&mut changes);
+            needs_update = grid.update();
             updated = true;
         }
 
         if any_event || updated {
             {
-                let mut lock = WRITEBACK_GRID.lock().unwrap();
-                lock.apply_changes(changes.iter());
-                lock.set_radius(grid.radius())
+                PIXELS.lock().unwrap().clone_from(&grid.colors);
             }
-            changes = Changelist::using_capacity(changes);
         }
 
         let elapsed = start.elapsed();
@@ -81,9 +82,31 @@ pub fn render_to(
     mouse_in_window: bool,
     gradient: &Gradient,
     mouse_position: (i32, i32),
+    width: NonZeroUsize,
+    height: NonZeroUsize,
+    radius: f64,
 ) {
-    WRITEBACK_GRID
-        .lock()
-        .unwrap()
-        .render_to(buffer, mouse_in_window, gradient, mouse_position)
+    {
+        let colors = PIXELS.lock().unwrap();
+        if buffer.len() != colors.len() {
+            return;
+        }
+
+        buffer.copy_from_slice(&colors);
+    }
+
+    if mouse_in_window {
+        let color = gradient.peek_color();
+        for (dx, dy) in circle_offsets(radius) {
+            let x = mouse_position.0 as isize + dx;
+            let y = mouse_position.1 as isize + dy;
+
+            if x >= 0 && x < width.get() as isize && y >= 0 && y < height.get() as isize {
+                let i = (y * width.get() as isize + x) as usize;
+                if buffer[i] == EMPTY {
+                    buffer[i] = color;
+                }
+            }
+        }
+    }
 }
