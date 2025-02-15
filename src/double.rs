@@ -90,17 +90,18 @@ pub fn render_to(
     height: u16,
     radius: f64,
 ) {
-    for i in temporaries.drain(..) {
-        buffer[i] = EMPTY;
-    }
-
     if CHANGED.swap(false, Ordering::Relaxed) {
         let mut lock = PIXELS.lock().unwrap();
         if lock.len() == buffer.len() {
             std::mem::swap(buffer, &mut *lock);
         }
-        drop(lock);
+    } else {
+        for i in temporaries.iter().copied() {
+            buffer[i] = EMPTY;
+        }
     }
+
+    temporaries.clear();
 
     if mouse_in_window {
         let color = gradient.peek_color();
