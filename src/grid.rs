@@ -166,8 +166,7 @@ impl Grid {
             return;
         }
 
-        let colors = bytemuck::cast_slice(&self.colors);
-        buffer.copy_from_slice(colors);
+        buffer.copy_from_slice(&self.colors);
 
         if mouse_in_window {
             let color = gradient.peek_color();
