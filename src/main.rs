@@ -10,6 +10,7 @@ mod changelist;
 mod double;
 mod gradient;
 mod grid;
+mod resize;
 
 static RADII: &[f64] = &[1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0];
 
@@ -43,9 +44,9 @@ fn main() {
     let mut mouse_in_window;
     let mut mouse_clicked;
     let mut radius = DEFAULT_RADIUS;
-    let mut last_output_size = (0, 0);
+    let mut last_output_size = (800, 600);
 
-    let mut pixel_buffer = vec![0u32; 3000];
+    let mut pixel_buffer = vec![0u32; 800 * 600];
 
     let mut i = 0;
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
@@ -91,6 +92,11 @@ fn main() {
         let output_size = window.get_size();
         let output_size = ((output_size.0 / zoom) as u32, (output_size.1 / zoom) as u32);
 
+        if mouse_clicked {
+            let color = gradient.next_color();
+            sender.send(Event::Spawn(color, mouse_position)).unwrap();
+        }
+
         if output_size != last_output_size {
             sender
                 .send(Event::Resize(
@@ -99,8 +105,11 @@ fn main() {
                 ))
                 .unwrap();
 
-            // TODO: resize smartly
-            pixel_buffer.resize((output_size.0 * output_size.1) as _, 0);
+            resize::smart_resize(
+                &mut pixel_buffer,
+                (last_output_size.0 as usize, last_output_size.1 as usize),
+                (output_size.0 as usize, output_size.1 as usize),
+            );
         }
         last_output_size = output_size;
 
@@ -110,11 +119,6 @@ fn main() {
             &gradient,
             mouse_position,
         );
-
-        if mouse_clicked {
-            let color = gradient.next_color();
-            sender.send(Event::Spawn(color, mouse_position)).unwrap();
-        }
 
         let elapsed = start.elapsed();
 

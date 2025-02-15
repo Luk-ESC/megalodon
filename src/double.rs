@@ -8,8 +8,8 @@ use crate::{changelist::Changelist, gradient::Gradient, grid::Grid, DEFAULT_RADI
 
 static WRITEBACK_GRID: LazyLock<Mutex<Grid>> = LazyLock::new(|| {
     Mutex::new(Grid::new(
-        NonZeroUsize::new(1).unwrap(),
-        NonZeroUsize::new(1).unwrap(),
+        NonZeroUsize::new(800).unwrap(),
+        NonZeroUsize::new(600).unwrap(),
         RADII[DEFAULT_RADIUS],
     ))
 });

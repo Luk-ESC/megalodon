@@ -5,6 +5,7 @@ use fastrand::Rng;
 use crate::{
     changelist::{Change, Changelist, Direction},
     gradient::Gradient,
+    resize,
 };
 
 fn circle_offsets(radius: f64) -> impl Iterator<Item = (isize, isize)> {
@@ -25,8 +26,7 @@ pub struct Grid {
     width: NonZeroUsize,
     height: NonZeroUsize,
     radius: f64,
-    colors: Box<[u32]>,
-    row_counts: Box<[usize]>,
+    colors: Vec<u32>,
     rng: Rng,
 }
 
@@ -39,23 +39,13 @@ impl Grid {
             width,
             height,
             radius,
-            colors: vec![EMPTY; width.get() * height.get()].into_boxed_slice(),
-            row_counts: vec![0; height.get()].into_boxed_slice(),
+            colors: vec![EMPTY; width.get() * height.get()],
             rng: Rng::new(),
         }
     }
 
     pub fn update(&mut self, changes: &mut Changelist) -> bool {
         let mut row = self.height.get() - 2;
-        let highest_non_empty_row = self
-            .row_counts
-            .iter()
-            .position(|&count| count > 0)
-            .unwrap_or(0);
-
-        if highest_non_empty_row >= row {
-            return false;
-        }
 
         let mut updated = false;
 
@@ -89,7 +79,7 @@ impl Grid {
                 column += direction;
             }
 
-            if row == highest_non_empty_row {
+            if row == 0 {
                 break;
             }
 
@@ -122,7 +112,6 @@ impl Grid {
 
     fn raw_clear(&mut self) {
         self.colors.fill(EMPTY);
-        self.row_counts.fill(0);
     }
 
     pub fn clear(&mut self, changes: &mut Changelist) {
@@ -135,9 +124,6 @@ impl Grid {
 
         self.colors[b] = self.colors[a];
         self.colors[a] = EMPTY;
-
-        self.row_counts[a / self.width.get()] -= 1;
-        self.row_counts[b / self.width.get()] += 1;
     }
 
     pub fn move_(&mut self, a: usize, b: usize, changes: &mut Changelist) {
@@ -158,7 +144,6 @@ impl Grid {
         assert!(self.is_empty(a));
 
         self.colors[a] = color;
-        self.row_counts[a / self.width.get()] += 1;
     }
 
     pub fn set_pixel(&mut self, a: usize, color: u32, changes: &mut Changelist) {
@@ -178,7 +163,6 @@ impl Grid {
         mouse_position: (i32, i32),
     ) {
         if buffer.len() != self.colors.len() {
-            eprintln!("buffer length mismatch");
             return;
         }
 
@@ -228,11 +212,15 @@ impl Grid {
     }
 
     fn raw_resize(&mut self, width: NonZeroUsize, height: NonZeroUsize) {
-        let new_colors = vec![EMPTY; width.get() * height.get()].into_boxed_slice();
-        self.colors = new_colors;
+        //let new_colors = vec![EMPTY; width.get() * height.get()].into_boxed_slice();
+        //self.colors = new_colors;
+        resize::smart_resize(
+            &mut self.colors,
+            (self.width.into(), self.height.into()),
+            (width.into(), height.into()),
+        );
         self.width = width;
         self.height = height;
-        self.row_counts = vec![0; height.get()].into_boxed_slice();
     }
 
     pub fn resize(&mut self, width: NonZeroUsize, height: NonZeroUsize, changes: &mut Changelist) {
