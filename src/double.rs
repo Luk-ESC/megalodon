@@ -77,8 +77,10 @@ pub fn update_thread(recv: Receiver<Event>) {
     }
 }
 
+#[expect(clippy::too_many_arguments)]
 pub fn render_to(
-    buffer: &mut [u32],
+    buffer: &mut Vec<u32>,
+    temporaries: &mut Vec<usize>,
     mouse_in_window: bool,
     gradient: &Gradient,
     mouse_position: (i32, i32),
@@ -86,13 +88,20 @@ pub fn render_to(
     height: NonZeroUsize,
     radius: f64,
 ) {
-    {
-        let colors = PIXELS.lock().unwrap();
+    for i in temporaries.drain(..) {
+        buffer[i] = EMPTY;
+    }
+
+    let mut lock = PIXELS.lock().unwrap();
+    let colors = std::mem::take(&mut *lock);
+    drop(lock);
+
+    if !colors.is_empty() {
         if buffer.len() != colors.len() {
             return;
         }
 
-        buffer.copy_from_slice(&colors);
+        *buffer = colors;
     }
 
     if mouse_in_window {
@@ -104,6 +113,7 @@ pub fn render_to(
             if x >= 0 && x < width.get() as isize && y >= 0 && y < height.get() as isize {
                 let i = (y * width.get() as isize + x) as usize;
                 if buffer[i] == EMPTY {
+                    temporaries.push(i);
                     buffer[i] = color;
                 }
             }

@@ -46,6 +46,7 @@ fn main() {
     let mut last_output_size = (800, 600);
 
     let mut pixel_buffer = vec![0u32; 800 * 600];
+    let mut temporaries = vec![];
 
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
         if window.is_key_pressed(Key::R, KeyRepeat::No) {
@@ -105,11 +106,14 @@ fn main() {
                 (last_output_size.0 as usize, last_output_size.1 as usize),
                 (output_size.0 as usize, output_size.1 as usize),
             );
+
+            temporaries.clear();
         }
         last_output_size = output_size;
 
         double::render_to(
             &mut pixel_buffer,
+            &mut temporaries,
             mouse_in_window,
             &gradient,
             mouse_position,
