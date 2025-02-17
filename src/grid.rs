@@ -27,6 +27,7 @@ pub struct Grid {
     highest_row: u16,
     lowest_row: u16,
     left_skip: u16,
+    right_skip: u16,
 }
 
 pub const EMPTY: u32 = 0xFFE0FFFE;
@@ -44,6 +45,7 @@ impl Grid {
             highest_row: DEFAULT_HEIGHT as u16 - 1,
             lowest_row: 0,
             left_skip: DEFAULT_WIDTH as u16 - 1,
+            right_skip: 0,
         }
     }
 
@@ -54,6 +56,7 @@ impl Grid {
         self.checked.fill(EMPTY);
         let mut lowest_row = 0;
         let mut most_left = self.width - 1;
+        let mut most_right = 0;
         for row in (self.highest_row..=self.lowest_row).rev() {
             let mut updated_this_row = false;
             let direction = if self.rng.bool() { 1i16 } else { -1 };
@@ -61,11 +64,11 @@ impl Grid {
             let mut column = if direction > 0 {
                 self.left_skip
             } else {
-                self.width - 1
+                self.right_skip
             };
 
             let limit = if direction > 0 {
-                self.width - 1
+                self.right_skip
             } else {
                 self.left_skip
             };
@@ -77,7 +80,9 @@ impl Grid {
                     let moved_down = self.update_pixel(i, column);
                     updated_this_row |= moved_down;
                     if moved_down {
+                        // TODO: Check which way it actually moved
                         most_left = most_left.min(column - 1);
+                        most_right = most_right.max(column + 1);
                     }
                 }
 
@@ -101,6 +106,7 @@ impl Grid {
 
         self.lowest_row = lowest_row.min(self.height - 2);
         self.left_skip = most_left;
+        self.right_skip = most_right;
 
         updated
     }
@@ -131,6 +137,7 @@ impl Grid {
         self.highest_row = self.height - 1;
         self.lowest_row = 0;
         self.left_skip = self.width - 1;
+        self.right_skip = 0;
     }
 
     fn move_(&mut self, a: u32, b: u32) {
@@ -165,6 +172,7 @@ impl Grid {
                 self.highest_row = self.highest_row.min(y as u16);
                 self.lowest_row = self.lowest_row.max(y as u16).min(self.height - 2);
                 self.left_skip = self.left_skip.min(x as u16);
+                self.right_skip = self.right_skip.max(x as u16);
                 let index = (y * self.width as isize + x) as u32;
                 if self.is_empty(index) {
                     self.set_pixel(index, color);
@@ -189,6 +197,7 @@ impl Grid {
         self.highest_row = 0;
         self.lowest_row = self.height - 2;
         self.left_skip = 0;
+        self.right_skip = self.width - 1;
     }
 
     pub(crate) fn set_radius(&mut self, r: f64) {
