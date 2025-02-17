@@ -35,13 +35,8 @@ fn main() {
     std::thread::spawn(move || update_thread(recv));
 
     let mut zoom = 3;
-
-    let mut mouse_position;
-    let mut mouse_in_window;
-    let mut mouse_clicked;
     let mut radius = RadiusId::default();
     let mut last_output_size = (DEFAULT_WIDTH as u16, DEFAULT_HEIGHT as u16);
-
     let mut pixel_buffer = vec![0u32; DEFAULT_WIDTH * DEFAULT_HEIGHT];
     let mut temporaries = vec![];
 
@@ -72,23 +67,21 @@ fn main() {
             sender.send(Event::Radius(radius)).unwrap();
         }
 
-        let new_pos = window.get_mouse_pos(minifb::MouseMode::Clamp).unwrap();
-        mouse_position = (
-            (new_pos.0 / zoom as f32) as u16,
-            (new_pos.1 / zoom as f32) as u16,
+        let mouse_position = window.get_mouse_pos(minifb::MouseMode::Clamp).unwrap();
+        let mouse_position = (
+            (mouse_position.0 / zoom as f32).round() as u16,
+            (mouse_position.1 / zoom as f32).round() as u16,
         );
-        mouse_in_window = window.get_mouse_pos(minifb::MouseMode::Discard).is_some();
 
-        mouse_clicked = window.get_mouse_down(MouseButton::Left);
-
-        let output_size = window.get_size();
-        let output_size = ((output_size.0 / zoom) as u16, (output_size.1 / zoom) as u16);
-
-        if mouse_clicked {
+        if window.get_mouse_down(MouseButton::Left) {
             let color = gradient.next_color();
             sender.send(Event::Spawn(color, mouse_position)).unwrap();
         }
 
+        let mouse_in_window = window.get_mouse_pos(minifb::MouseMode::Discard).is_some();
+
+        let output_size = window.get_size();
+        let output_size = ((output_size.0 / zoom) as u16, (output_size.1 / zoom) as u16);
         if output_size != last_output_size {
             sender
                 .send(Event::Resize(output_size.0, output_size.1))
