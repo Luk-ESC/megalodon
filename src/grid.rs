@@ -65,7 +65,7 @@ impl Grid {
                     break;
                 }
 
-                column += direction as u16;
+                column = column.wrapping_add(direction as u16);
             }
 
             updated |= updated_this_row;
@@ -132,7 +132,7 @@ impl Grid {
 
             if x >= 0 && x < self.width as isize && y >= 0 && y < self.height as isize {
                 self.highest_row = self.highest_row.min(y as u16);
-                self.lowest_row = self.lowest_row.max(y as u16);
+                self.lowest_row = self.lowest_row.max(y as u16).min(self.height - 2);
                 let index = (y * self.width as isize + x) as u32;
                 if self.is_empty(index) {
                     self.set_pixel(index, color);
