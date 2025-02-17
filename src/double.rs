@@ -39,11 +39,13 @@ pub fn update_thread(recv: Receiver<Event>) {
     loop {
         let start = Instant::now();
 
-        let mut any_event = false;
+        let mut cleared = false;
         while let Ok(event) = recv.try_recv() {
-            any_event = true;
             match event {
-                Event::Clear => grid.clear(),
+                Event::Clear => {
+                    cleared = true;
+                    grid.clear();
+                }
                 Event::Resize(width, height) => {
                     needs_update = true;
                     grid.resize(width, height);
@@ -63,7 +65,7 @@ pub fn update_thread(recv: Receiver<Event>) {
             updated = true;
         }
 
-        if any_event || updated {
+        if cleared || updated {
             {
                 #[cfg(debug_assertions)]
                 CHECKED.lock().unwrap().clone_from(&grid.checked);
