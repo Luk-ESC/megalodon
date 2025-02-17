@@ -11,7 +11,7 @@ impl Default for RadiusId {
 
 impl RadiusId {
     pub fn next_bigger(&mut self) {
-        self.0 = (self.0 + 1).min(RADII.len() as u8)
+        self.0 = (self.0 + 1).min(RADII.len() as u8 - 1)
     }
 
     pub fn next_smaller(&mut self) {
