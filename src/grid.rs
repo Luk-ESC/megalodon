@@ -106,7 +106,8 @@ impl Grid {
 
         self.lowest_row = lowest_row.min(self.height - 2);
         self.left_skip = most_left;
-        self.right_skip = most_right;
+        // FIXME: remove .min() when actually checking if moved right
+        self.right_skip = most_right.min(self.width - 1);
 
         updated
     }
@@ -172,7 +173,7 @@ impl Grid {
                 self.highest_row = self.highest_row.min(y as u16);
                 self.lowest_row = self.lowest_row.max(y as u16).min(self.height - 2);
                 self.left_skip = self.left_skip.min(x as u16);
-                self.right_skip = self.right_skip.max(x as u16);
+                self.right_skip = self.right_skip.max(x as u16).min(self.width - 1);
                 let index = (y * self.width as isize + x) as u32;
                 if self.is_empty(index) {
                     self.set_pixel(index, color);
