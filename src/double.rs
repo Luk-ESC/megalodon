@@ -22,12 +22,15 @@ pub enum Event {
 
 static CHANGED: AtomicBool = AtomicBool::new(false);
 static PIXELS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
+static CHECKED: Mutex<Vec<u32>> = Mutex::new(Vec::new());
 
 pub fn update_thread(recv: Receiver<Event>) {
     let sleep_time = Duration::from_secs(1) / 120;
     let mut grid = Grid::new();
     {
         PIXELS.lock().unwrap().clone_from(&grid.colors);
+        #[cfg(debug_assertions)]
+        CHECKED.lock().unwrap().clone_from(&grid.checked);
         CHANGED.store(true, Ordering::Relaxed);
     }
 
@@ -62,6 +65,8 @@ pub fn update_thread(recv: Receiver<Event>) {
 
         if any_event || updated {
             {
+                #[cfg(debug_assertions)]
+                CHECKED.lock().unwrap().clone_from(&grid.checked);
                 PIXELS.lock().unwrap().clone_from(&grid.colors);
             }
             CHANGED.store(true, Ordering::Relaxed);
@@ -91,9 +96,16 @@ pub fn render_to(
     radius: f64,
 ) {
     if CHANGED.swap(false, Ordering::Relaxed) {
-        let mut lock = PIXELS.lock().unwrap();
-        if lock.len() == buffer.len() {
-            std::mem::swap(buffer, &mut *lock);
+        if !cfg!(debug_assertions) {
+            let mut lock = PIXELS.lock().unwrap();
+            if lock.len() == buffer.len() {
+                std::mem::swap(buffer, &mut *lock);
+            }
+        } else {
+            let mut lock = CHECKED.lock().unwrap();
+            if lock.len() == buffer.len() {
+                std::mem::swap(buffer, &mut *lock);
+            }
         }
     } else {
         for i in temporaries.iter().copied() {

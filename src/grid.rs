@@ -21,6 +21,8 @@ pub struct Grid {
     height: u16,
     radius: f64,
     pub colors: Vec<u32>,
+    #[cfg(debug_assertions)]
+    pub checked: Vec<u32>,
     rng: Rng,
     highest_row: u16,
     lowest_row: u16,
@@ -36,6 +38,8 @@ impl Grid {
             radius: RadiusId::default().get(),
             colors: vec![EMPTY; DEFAULT_WIDTH * DEFAULT_HEIGHT],
             rng: Rng::new(),
+            #[cfg(debug_assertions)]
+            checked: vec![EMPTY; DEFAULT_WIDTH * DEFAULT_HEIGHT],
             highest_row: DEFAULT_HEIGHT as u16 - 1,
             lowest_row: 0,
         }
@@ -44,6 +48,8 @@ impl Grid {
     pub fn update(&mut self) -> bool {
         let mut updated = false;
 
+        #[cfg(debug_assertions)]
+        self.checked.fill(EMPTY);
         let mut lowest_row = 0;
         for row in (self.highest_row..=self.lowest_row).rev() {
             let mut updated_this_row = false;
@@ -105,6 +111,8 @@ impl Grid {
 
     pub fn clear(&mut self) {
         self.colors.fill(EMPTY);
+        #[cfg(debug_assertions)]
+        self.checked.fill(EMPTY);
         self.highest_row = self.height - 1;
         self.lowest_row = 0;
     }
@@ -120,8 +128,15 @@ impl Grid {
         self.colors[a as usize] = color;
     }
 
-    pub fn is_empty(&self, a: u32) -> bool {
-        self.colors[a as usize] == EMPTY
+    pub fn is_empty(&mut self, a: u32) -> bool {
+        let ret = self.colors[a as usize] == EMPTY;
+        #[cfg(debug_assertions)]
+        if ret {
+            self.checked[a as usize] = 0xFFFF0000;
+        } else {
+            self.checked[a as usize] = 0xFF00FF00;
+        }
+        ret
     }
 
     pub fn spawn(&mut self, mouse_pos: (u16, u16), color: u32) -> bool {
@@ -149,6 +164,9 @@ impl Grid {
             (self.width as usize, self.height as usize),
             (width as usize, height as usize),
         );
+        #[cfg(debug_assertions)]
+        self.checked
+            .resize(width as usize * height as usize, 0xFFFF0000);
         self.width = width;
         self.height = height;
         self.highest_row = 0;
