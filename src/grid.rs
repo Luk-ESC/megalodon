@@ -23,6 +23,7 @@ pub struct Grid {
     pub colors: Vec<u32>,
     rng: Rng,
     highest_row: u16,
+    lowest_row: u16,
 }
 
 pub const EMPTY: u32 = 0xFFE0FFFE;
@@ -36,13 +37,15 @@ impl Grid {
             colors: vec![EMPTY; DEFAULT_WIDTH * DEFAULT_HEIGHT],
             rng: Rng::new(),
             highest_row: DEFAULT_HEIGHT as u16 - 1,
+            lowest_row: 0,
         }
     }
 
     pub fn update(&mut self) -> bool {
         let mut updated = false;
 
-        for row in (self.highest_row..=self.height - 2).rev() {
+        let mut lowest_row = 0;
+        for row in (self.highest_row..=self.lowest_row).rev() {
             let mut updated_this_row = false;
             let direction = if self.rng.bool() { 1i16 } else { -1 };
 
@@ -72,8 +75,11 @@ impl Grid {
             } else if updated_this_row {
                 // check row above this one again
                 self.highest_row = self.highest_row.min(row - 1);
+                lowest_row = lowest_row.max(row + 1);
             }
         }
+
+        self.lowest_row = lowest_row.min(self.height - 2);
 
         updated
     }
@@ -100,6 +106,7 @@ impl Grid {
     pub fn clear(&mut self) {
         self.colors.fill(EMPTY);
         self.highest_row = self.height - 1;
+        self.lowest_row = 0;
     }
 
     fn move_(&mut self, a: u32, b: u32) {
@@ -125,6 +132,7 @@ impl Grid {
 
             if x >= 0 && x < self.width as isize && y >= 0 && y < self.height as isize {
                 self.highest_row = self.highest_row.min(y as u16);
+                self.lowest_row = self.lowest_row.max(y as u16);
                 let index = (y * self.width as isize + x) as u32;
                 if self.is_empty(index) {
                     self.set_pixel(index, color);
@@ -144,6 +152,7 @@ impl Grid {
         self.width = width;
         self.height = height;
         self.highest_row = 0;
+        self.lowest_row = self.height - 2;
     }
 
     pub(crate) fn set_radius(&mut self, r: f64) {
