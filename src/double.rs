@@ -15,6 +15,7 @@ use crate::{
 
 pub enum Event {
     Clear,
+    Exit,
     Resize(u16, u16),
     Spawn(u32, (u16, u16)),
     Radius(RadiusId),
@@ -55,6 +56,12 @@ pub fn update_thread(recv: Receiver<Event>) {
                 }
                 Event::Radius(r) => {
                     grid.set_radius(r.get());
+                }
+                Event::Exit => {
+                    #[cfg(debug_assertions)]
+                    std::mem::take(&mut *CHECKED.lock().unwrap());
+                    std::mem::take(&mut *PIXELS.lock().unwrap());
+                    return;
                 }
             }
         }

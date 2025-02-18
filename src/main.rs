@@ -32,7 +32,7 @@ fn main() {
     let mut gradient = Gradient::new(&mut rng, steps);
 
     let (sender, recv) = std::sync::mpsc::channel();
-    std::thread::spawn(move || update_thread(recv));
+    let child = std::thread::spawn(move || update_thread(recv));
 
     let mut zoom = 3;
     let mut radius = RadiusId::default();
@@ -112,4 +112,7 @@ fn main() {
             .update_with_buffer(&pixel_buffer, output_size.0 as _, output_size.1 as _)
             .unwrap();
     }
+
+    sender.send(Event::Exit).unwrap();
+    child.join().unwrap()
 }
