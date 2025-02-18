@@ -30,6 +30,14 @@ pub struct Grid {
     right_skip: u16,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Direction {
+    None = 0,
+    Down = 1,
+    DownLeft = 2,
+    DownRight = 3,
+}
+
 pub const EMPTY: u32 = 0xFFE0FFFE;
 
 impl Grid {
@@ -77,12 +85,19 @@ impl Grid {
                 let i = row as u32 * self.width as u32 + column as u32;
 
                 if !self.is_empty(i) {
-                    let moved_down = self.update_pixel(i, column);
-                    updated_this_row |= moved_down;
-                    if moved_down {
-                        // TODO: Check which way it actually moved
+                    let moved = self.update_pixel(i, column);
+                    updated_this_row |= moved != Direction::None;
+
+                    if moved == Direction::DownLeft {
+                        // Moved left, column to the left has a pixel
                         most_left = most_left.min(column - 1);
+                    } else if moved == Direction::DownRight {
+                        // Moved right, column to the right has a pixel
                         most_right = most_right.max(column + 1);
+                    } else {
+                        // Stayed in this colum.
+                        most_left = most_left.min(column);
+                        most_right = most_right.max(column);
                     }
                 }
 
@@ -106,13 +121,12 @@ impl Grid {
 
         self.lowest_row = lowest_row.min(self.height - 2);
         self.left_skip = most_left;
-        // FIXME: remove .min() when actually checking if moved right
         self.right_skip = most_right.min(self.width - 1);
 
         updated
     }
 
-    fn update_pixel(&mut self, i: u32, column: u16) -> bool {
+    fn update_pixel(&mut self, i: u32, column: u16) -> Direction {
         let below = i + self.width as u32;
         let below_left = below - 1;
         let below_right = below + 1;
@@ -120,15 +134,15 @@ impl Grid {
         // If there are no pixels below, move it down.
         if self.is_empty(below) {
             self.move_(i, below);
-            return true;
+            return Direction::Down;
         } else if column != 0 && self.is_empty(below_left) {
             self.move_(i, below_left);
-            return true;
+            return Direction::DownLeft;
         } else if column != self.width - 1 && self.is_empty(below_right) {
             self.move_(i, below_right);
-            return true;
+            return Direction::DownRight;
         }
-        false
+        Direction::None
     }
 
     pub fn clear(&mut self) {
