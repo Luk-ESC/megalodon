@@ -7,9 +7,9 @@ pub type Steps = NonZeroU16;
 pub(crate) struct Gradient {
     start: (u8, u8, u8),
     end: (u8, u8, u8),
-    i: u32,
     step: (f32, f32, f32),
     cur_step: (f32, f32, f32),
+    up: bool,
 }
 
 fn calculate_step(start: (u8, u8, u8), end: (u8, u8, u8), steps: Steps) -> (f32, f32, f32) {
@@ -34,9 +34,9 @@ impl Gradient {
         Self {
             start,
             end,
-            i: 0,
             step,
             cur_step,
+            up: true,
         }
     }
 
@@ -57,20 +57,26 @@ impl Gradient {
             self.cur_step.2 as u8,
         );
 
-        if color >= self.end {
+        if self.up && color >= self.end {
             color = self.end;
+            self.cur_step = (self.end.0 as f32, self.end.1 as f32, self.end.2 as f32);
+            self.up = false;
+        } else if !self.up && color <= self.start {
+            color = self.start;
             self.cur_step = (
                 self.start.0 as f32,
                 self.start.1 as f32,
                 self.start.2 as f32,
             );
-            self.i = 0;
-        } else {
-            self.i += 1;
-
+            self.up = true;
+        } else if self.up {
             self.cur_step.0 += self.step.0;
             self.cur_step.1 += self.step.1;
             self.cur_step.2 += self.step.2;
+        } else {
+            self.cur_step.0 -= self.step.0;
+            self.cur_step.1 -= self.step.1;
+            self.cur_step.2 -= self.step.2;
         }
 
         ((color.0 as u32) << 16) | ((color.1 as u32) << 8) | color.2 as u32
