@@ -5,7 +5,7 @@
       url = "github:numtide/flake-utils";
       inputs.systems.follows = "systems";
     };
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     naersk = {
       url = "github:nix-community/naersk";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -56,14 +56,6 @@
             wrapProgram $out/bin/megalodon --set LD_LIBRARY_PATH "${LD_LIBRARY_PATH}"
           '';
 
-        };
-
-        # For `nix develop`:
-        devShell = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [
-            rustc
-            cargo
-          ];
         };
       }
     );
