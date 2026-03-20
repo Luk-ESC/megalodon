@@ -4,6 +4,9 @@ use gradient::{Gradient, Steps};
 use minifb::{Key, KeyRepeat, MouseButton, Window};
 use radii::RadiusId;
 
+use crate::auto::Auto;
+
+mod auto;
 mod double;
 mod gradient;
 mod grid;
@@ -39,9 +42,16 @@ fn main() {
     let mut last_output_size = (DEFAULT_WIDTH as u16, DEFAULT_HEIGHT as u16);
     let mut pixel_buffer = vec![0u32; DEFAULT_WIDTH * DEFAULT_HEIGHT];
     let mut temporaries = vec![];
+    let mut auto = Auto::new();
 
     while window.is_open() && !window.is_key_pressed(Key::Escape, KeyRepeat::No) {
-        if window.is_key_pressed(Key::R, KeyRepeat::No) {
+        if window.is_key_pressed(Key::A, KeyRepeat::No) {
+            auto.flip();
+        }
+
+        auto.tick();
+
+        if window.is_key_pressed(Key::R, KeyRepeat::No) || auto.choose_new_color(&gradient) {
             gradient = Gradient::new(&mut rng, steps);
         }
 
@@ -67,20 +77,27 @@ fn main() {
             sender.send(Event::Radius(radius)).unwrap();
         }
 
-        let mouse_position = window.get_mouse_pos(minifb::MouseMode::Clamp).unwrap();
+        let output_size = window.get_size();
+        let mut mouse_position = window.get_mouse_pos(minifb::MouseMode::Clamp).unwrap();
+        if auto.enabled {
+            let relative = auto.mouse_pos();
+            mouse_position = (
+                (output_size.0 as f32 * relative.0),
+                (output_size.1 as f32 * relative.1),
+            );
+        }
         let mouse_position = (
             (mouse_position.0 / zoom as f32).round() as u16,
             (mouse_position.1 / zoom as f32).round() as u16,
         );
 
-        if window.get_mouse_down(MouseButton::Left) {
+        if window.get_mouse_down(MouseButton::Left) || auto.should_spawn() {
             let color = gradient.next_color();
             sender.send(Event::Spawn(color, mouse_position)).unwrap();
         }
 
         let mouse_in_window = window.get_mouse_pos(minifb::MouseMode::Discard).is_some();
 
-        let output_size = window.get_size();
         let output_size = ((output_size.0 / zoom) as u16, (output_size.1 / zoom) as u16);
         if output_size != last_output_size {
             sender

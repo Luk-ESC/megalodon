@@ -1,6 +1,5 @@
 use crate::grid::EMPTY;
 
-#[expect(clippy::comparison_chain)]
 pub fn smart_resize(
     buffer: &mut Vec<u32>,
     (old_width, old_height): (usize, usize),
